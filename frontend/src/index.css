@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-white antialiased overflow-x-hidden;
+    background: radial-gradient(circle at 50% 50%, #1f1d31 0%, #0c0a1a 100%);
+    min-height: 100vh;
+  }
+}
