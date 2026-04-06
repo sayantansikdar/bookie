@@ -1,0 +1,28 @@
+stages:
+  ingest:
+    cmd: python src/data_pipeline/ingest.py
+    deps:
+      - src/data_pipeline/ingest.py
+    outs:
+      - data/raw/ratings.csv
+  preprocess:
+    cmd: python src/data_pipeline/preprocess.py
+    deps:
+      - src/data_pipeline/preprocess.py
+      - data/raw/ratings.csv
+    outs:
+      - data/processed/train.csv
+      - data/processed/test.csv
+  train:
+    cmd: python src/train_model.py
+    deps:
+      - src/train_model.py
+      - data/processed/train.csv
+    outs:
+      - data/models/svd_model.pkl
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - src/evaluate.py
+      - data/models/svd_model.pkl
+      - data/processed/test.csv

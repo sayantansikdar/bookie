@@ -1,0 +1,22 @@
+{
+  "title": "MLOps API Dashboard",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "API Request Count",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "rate(api_request_count_total[1m])", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "API Request Latency",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "rate(api_request_latency_seconds_sum[1m]) / rate(api_request_latency_seconds_count[1m])", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 30
+}

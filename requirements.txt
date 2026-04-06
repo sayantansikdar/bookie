@@ -1,0 +1,10 @@
+pandas
+numpy
+scikit-learn
+scikit-surprise
+mlflow
+dvc
+pytest
+fastapi
+uvicorn
+prometheus-client
