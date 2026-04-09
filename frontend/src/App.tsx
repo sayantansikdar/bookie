@@ -1,59 +1,83 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Scene } from './components/ThreeCanvas/Scene';
-import { SearchBox } from './components/UserInput/SearchBox';
-import { Grid } from './components/RecommendationGrid/Grid';
+import React, { useState, useEffect } from 'react';
+import { TopNavBar } from './components/Layout/TopNavBar';
+import { Footer } from './components/Layout/Footer';
+import { WelcomeView } from './views/WelcomeView';
+import { SuggestionsView } from './views/SuggestionsView';
+import { ReadingCornerView } from './views/ReadingCornerView';
+import { AmbientModeView } from './views/AmbientModeView';
 import { useRecommendations } from './hooks/useRecommendations';
-import { Book } from 'lucide-react';
+
+type ViewState = 'welcome' | 'suggestions' | 'reading_corner' | 'ambient';
 
 function App() {
-  const [userId, setUserId] = useState('');
+  const [currentView, setCurrentView] = useState<ViewState>('welcome');
+  const [activeUserId, setActiveUserId] = useState<string>('');
+  
   const { mutate: fetchRecos, data: recommendations, isPending, isError } = useRecommendations();
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (userId) fetchRecos(userId);
+  const handleSearch = (userId: string) => {
+    setActiveUserId(userId);
+    fetchRecos(userId);
+  };
+  
+  useEffect(() => {
+    if (recommendations && recommendations.length > 0) {
+      setCurrentView('suggestions');
+    }
+  }, [recommendations]);
+
+  const renderView = () => {
+    switch (currentView) {
+      case 'welcome':
+        return <WelcomeView onSearch={handleSearch} isLoading={isPending} />;
+      case 'suggestions':
+        return <SuggestionsView recommendations={recommendations || []} onBack={() => setCurrentView('welcome')} />;
+      case 'reading_corner':
+        return <ReadingCornerView />;
+      case 'ambient':
+        return <AmbientModeView onExit={() => setCurrentView('welcome')} />;
+      default:
+        return <WelcomeView onSearch={handleSearch} isLoading={isPending} />;
+    }
   };
 
+  // If ambient mode, we bypass the global nav/footer for an immersive experience
+  if (currentView === 'ambient') {
+    return <AmbientModeView onExit={() => setCurrentView('welcome')} />;
+  }
+
   return (
-    <div className="min-h-screen w-full relative overflow-hidden flex flex-col font-sans">
-      <Scene />
+    <div className="min-h-screen w-full relative flex flex-col font-sans overflow-x-hidden">
+      {/* Global Background Layer */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-[-2]"
+        style={{
+          background: 'radial-gradient(at 0% 0%, #fef9f1 0%, transparent 50%), radial-gradient(at 100% 0%, #f8f3eb 0%, transparent 50%), radial-gradient(at 100% 100%, #ece8e0 0%, transparent 50%), radial-gradient(at 0% 100%, #f1e1c4 0%, transparent 50%)',
+          filter: 'blur(80px)',
+          opacity: 0.6
+        }}
+      ></div>
+      <div 
+        className="fixed inset-0 pointer-events-none z-[-1]"
+        style={{
+          backgroundImage: 'url(https://lh3.googleusercontent.com/aida-public/AB6AXuB5cLfXkgdVaVyohRxq4E8FhpP5s4d9BvX1uma-2CjmrHquI0YewxJH5-okb9oP1HA1wF2rCcGjhv0iku1PIea2NwhZ1ef3ocpBNUCFFkWpQogegML17nKUfuqz35P3PU7vLUUdSxKn89IGfsTSJ7HD_JEXhPLnW9t8q0hvg9YIqY30XCoDImdvpV0tsydgEwEiOySe8WP_d-aM0ResYLjL1iAjqq1IjmHE_A_3YQjim2s1YNHDfCM6lCmBSgo-wbdmJB1vZ_fIAc8)',
+          opacity: 0.025
+        }}
+      ></div>
 
-      <main className="flex-1 relative z-10 w-full flex flex-col items-center pt-24 px-4 overflow-y-auto">
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-center mb-10 max-w-2xl"
-        >
-          <div className="flex items-center justify-center space-x-3 mb-6">
-            <Book size={32} className="text-primary" />
-            <h1 className="text-5xl md:text-6xl font-serif font-bold tracking-tight text-white">Bookie</h1>
-          </div>
-          <p className="text-lg text-gray-300 font-light leading-relaxed">
-            Step into your personal literary universe. Enter your ID and let our collaborative filtering engine curate your next great adventure.
-          </p>
-        </motion.div>
+      <TopNavBar onSetView={setCurrentView} />
 
-        <SearchBox 
-          userId={userId} 
-          setUserId={setUserId} 
-          onSubmit={handleSearch} 
-          isLoading={isPending} 
-        />
-
-        {isError && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-red-400 mt-4 bg-red-400/10 px-4 py-2 rounded-lg border border-red-400/20"
-          >
-            A magical disturbance occurred loading recommendations. Try again!
-          </motion.div>
+      <main className="flex-1 relative z-10 w-full flex flex-col items-center">
+        {isError && currentView === 'welcome' && (
+           <div className="text-red-800 mt-8 bg-red-100 px-6 py-3 rounded-xl border border-red-200/50 max-w-lg mx-auto shadow-sm">
+             We couldn't reach the shelves. Please try again.
+           </div>
         )}
-
-        {recommendations && <Grid recommendations={recommendations} />}
+        
+        {renderView()}
       </main>
+
+      <Footer onSetView={setCurrentView} />
     </div>
   );
 }
