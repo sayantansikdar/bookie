@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { STATIC_MODE, StaticMeta, loadStaticData } from '../hooks/useRecommendations';
 
 interface WelcomeViewProps {
   onSearch: (userId: string) => void;
@@ -7,6 +8,11 @@ interface WelcomeViewProps {
 
 export const WelcomeView: React.FC<WelcomeViewProps> = ({ onSearch, isLoading }) => {
   const [userId, setUserId] = useState('');
+  const [meta, setMeta] = useState<StaticMeta | null>(null);
+
+  useEffect(() => {
+    if (STATIC_MODE) loadStaticData().then(d => setMeta(d.meta)).catch(() => {});
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +72,14 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onSearch, isLoading })
               </div>
             </div>
           </form>
+
+          {STATIC_MODE && (
+            <p className="text-sm text-on-surface-variant/70 leading-relaxed -mt-4">
+              Live demo — try any reader ID from 1 to {meta?.n_users ?? 1000}. Picks are real {meta?.model ?? 'SVD'} predictions,
+              trained in GitHub Actions on {meta ? meta.n_ratings.toLocaleString() : '~10,000'} synthetic ratings
+              {meta ? ` (test RMSE ${meta.rmse.toFixed(2)})` : ''} and served as static JSON.
+            </p>
+          )}
 
           {/* Bento-style Feature Teasers */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-12">
